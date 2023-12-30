@@ -1,0 +1,12 @@
+package main
+
+import "github.com/gofiber/fiber/v2"
+
+func main() {
+	app := fiber.New()
+
+	//server public folder
+	app.Static("/", "./public")
+
+	app.Listen(":3000")
+}
