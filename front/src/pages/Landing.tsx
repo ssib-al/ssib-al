@@ -4,25 +4,33 @@ import Navbar from '../components/Navbar';
 import Notification from '../components/Notification';
 import { Fragment, useRef, useState } from 'react';
 import {
+  CheckCircleIcon,
   ExclamationCircleIcon,
   QuestionMarkCircleIcon,
 } from '@heroicons/react/24/outline';
+import { RECAPTCHA_SITE_KEY } from '../constants/recaptcha';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 const urlRegex: RegExp = new RegExp(
   '^[-a-zA-Z0-9@:%._+~#=]{2,256}.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_+.~#?&//=]*)$',
 );
 
 const LandingPage = () => {
+  const [captchaShow, setCaptchaShow] = useState(false);
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [linkInvalidNotificationOpen, setLinkInvalidNotificationOpen] =
     useState(false);
+  const [linkGeneratedNotificationOpen, setLinkGeneratedNotificationOpen] =
+    useState(false);
 
   const cancelButtonRef = useRef(null);
+  const linkDestinationInputRef = useRef<HTMLInputElement>(null);
+  const linkDomainInputRef = useRef<HTMLSelectElement>(null);
   const linkStrInputRef = useRef<HTMLInputElement>(null);
   const linkSSLInputRef = useRef<HTMLSelectElement>(null);
   const openLinkModal = () => {
-    if (!linkStrInputRef.current) return;
-    if (!urlRegex.test(linkStrInputRef.current.value)) {
+    if (!linkDestinationInputRef.current) return;
+    if (!urlRegex.test(linkDestinationInputRef.current.value)) {
       setLinkInvalidNotificationOpen(true);
       return;
     }
@@ -61,10 +69,7 @@ const LandingPage = () => {
                 cupiditate laboriosam fugiat.
               </p>
               <div className="pt-5">
-                <label
-                  htmlFor="phone-number"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
+                <label className="block text-sm font-medium leading-6 text-gray-900">
                   단축할 링크를 입력하세요
                 </label>
                 <div className="relative mt-2 rounded-md shadow-sm">
@@ -80,18 +85,46 @@ const LandingPage = () => {
                     </select>
                   </div>
                   <input
+                    ref={linkDestinationInputRef}
+                    type="text"
+                    name="destination"
+                    id="destination"
+                    className="block w-full rounded-md border-0 py-1.5 pl-24 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    placeholder="www.example.com"
+                  />
+                </div>
+                <label className="block pt-3 text-sm font-medium leading-6 text-gray-900">
+                  링크를 커스텀 하세요
+                </label>
+                <div className="relative mt-2 rounded-md shadow-sm">
+                  <div className="absolute inset-y-0 left-0 flex items-center">
+                    <select
+                      ref={linkDomainInputRef}
+                      id="domail"
+                      name="domain"
+                      className="h-full rounded-md border-0 bg-transparent py-0 pl-3 pr-5 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
+                    >
+                      <option>ssib.al/</option>
+                      <option>zirr.al/</option>
+                      <option>niae.me/</option>
+                    </select>
+                  </div>
+                  <input
                     ref={linkStrInputRef}
                     type="text"
                     name="link"
                     id="link"
-                    className="block w-full rounded-md border-0 py-1.5 pl-20 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                    placeholder="www.example.com"
+                    className="block w-full rounded-md border-0 py-1.5 pl-24 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    placeholder="대신할 링크를 입력하세요 (선택입력)"
                   />
                 </div>
               </div>
               <div className="mt-10 flex items-center gap-x-6">
                 <button
-                  onClick={() => openLinkModal()}
+                  onClick={() => {
+                    setCaptchaShow(false);
+                    openLinkModal();
+                  }}
                   className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                 >
                   단축하기
@@ -166,23 +199,49 @@ const LandingPage = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-                    <button
-                      type="button"
-                      className="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                      onClick={() => continueToLinkGenPage()}
-                    >
-                      링크 관리 수단 추가
-                    </button>
-                    <button
-                      type="button"
-                      className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                      onClick={() => setLinkModalOpen(false)}
-                      ref={cancelButtonRef}
-                    >
-                      스킵하기
-                    </button>
-                  </div>
+
+                  {captchaShow ? (
+                    <div className="mt-5 place-content-center sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-1 sm:gap-3">
+                      <ReCAPTCHA
+                        className="mx-auto"
+                        sitekey={RECAPTCHA_SITE_KEY}
+                        onChange={(value: string | null) => {
+                          if (value === null) {
+                            console.error('captcha error');
+                            return;
+                          }
+                          setLinkModalOpen(false);
+                          // TODO: generate link
+                          setLinkGeneratedNotificationOpen(true);
+                        }}
+                      />
+                      <button
+                        className="text-sm text-gray-500"
+                        onClick={() => setCaptchaShow(true)}
+                      >
+                        이전으로 <span aria-hidden="true">&rarr;</span>
+                      </button>
+                    </div>
+                  ) : null}
+                  {!captchaShow ? (
+                    <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+                      <button
+                        type="button"
+                        className="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                        onClick={() => continueToLinkGenPage()}
+                      >
+                        링크 관리 수단 추가
+                      </button>
+                      <button
+                        type="button"
+                        className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
+                        onClick={() => setCaptchaShow(true)}
+                        ref={cancelButtonRef}
+                      >
+                        스킵하기
+                      </button>
+                    </div>
+                  ) : null}
                 </Dialog.Panel>
               </Transition.Child>
             </div>
@@ -198,8 +257,20 @@ const LandingPage = () => {
             aria-hidden="true"
           />
         }
-        title="링크가 유효하지 않습니다."
+        title="링크가 유효하지 않습니다"
         description="링크를 다시 확인해주세요."
+      />
+      <Notification
+        open={linkGeneratedNotificationOpen}
+        setOpen={setLinkGeneratedNotificationOpen}
+        icon={
+          <CheckCircleIcon
+            className="h-6 w-6 text-green-600"
+            aria-hidden="true"
+          />
+        }
+        title="링크가 생성되었습니다"
+        description="링크를 복사하고 공유하세요!"
       />
     </div>
   );
