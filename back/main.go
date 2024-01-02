@@ -1,8 +1,16 @@
 package main
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"github.com/gofiber/fiber/v2"
+	"ssib.al/ssib-al-back/config"
+	"ssib.al/ssib-al-back/utils/logger"
+)
 
 func main() {
+	logger.NewLogger()
+
+	config.NewEnvConfig()
+	config.NewDBClient()
 	app := fiber.New()
 
 	app.Get("/api", func(c *fiber.Ctx) error {
