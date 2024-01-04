@@ -13,14 +13,16 @@ import (
 	"ssib.al/ssib-al-back/utils/crypt"
 	"ssib.al/ssib-al-back/utils/logger"
 	"ssib.al/ssib-al-back/utils/randstring"
+	"ssib.al/ssib-al-back/utils/recaptcha"
 	"ssib.al/ssib-al-back/utils/validator"
 )
 
 type ShortenReq struct {
-	Domain   string `json:"domain" validate:"required"`
-	Uri      string `json:"uri"`
-	Target   string `json:"target" validate:"required"`
-	Password string `json:"password"`
+	Domain         string `json:"domain" validate:"required"`
+	Uri            string `json:"uri"`
+	Target         string `json:"target" validate:"required"`
+	Password       string `json:"password"`
+	RecaptchaToken string `json:"token" validate:"required"`
 }
 
 func ShortenCtrl(c *fiber.Ctx) error {
@@ -51,6 +53,14 @@ func ShortenCtrl(c *fiber.Ctx) error {
 			))
 		}
 	}
+	if !recaptcha.IsValid(body.RecaptchaToken) {
+		return c.Status(fiber.StatusBadRequest).JSON(config.RaiseError(
+			fiber.StatusBadRequest,
+			"Invalid reCAPTCHA token",
+			"reCAPTCHA 토큰이 유효하지 않습니다.",
+		))
+	}
+
 	client := config.GetDBClient()
 	uri := body.Uri
 	if body.Uri == "" {
