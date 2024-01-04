@@ -18,12 +18,13 @@ type DevEnvConfig struct {
 	DomainPrefix string
 }
 type EnvConfig struct {
-	Mode       string // MODE
-	DBHost     string // POSTGRES_HOST
-	DBPort     int    // POSTGRES_PORT
-	DBUser     string // POSTGRES_USER
-	DBName     string // POSTGRES_DB
-	DBPassword string // POSTGRES_PASSWORD
+	Mode            string // MODE
+	DBHost          string // POSTGRES_HOST
+	DBPort          int    // POSTGRES_PORT
+	DBUser          string // POSTGRES_USER
+	DBName          string // POSTGRES_DB
+	DBPassword      string // POSTGRES_PASSWORD
+	ReCaptchaSecret string // RECAPTCHA_SECRET
 }
 
 func LoadStrEnv(key string) (value string) {
@@ -45,12 +46,13 @@ func LoadIntEnv(key string) (value int) {
 
 func NewEnvConfig() {
 	Env = &EnvConfig{
-		Mode:       LoadStrEnv("MODE"),
-		DBHost:     LoadStrEnv("POSTGRES_HOST"),
-		DBPort:     LoadIntEnv("POSTGRES_PORT"),
-		DBUser:     LoadStrEnv("POSTGRES_USER"),
-		DBName:     LoadStrEnv("POSTGRES_DB"),
-		DBPassword: LoadStrEnv("POSTGRES_PASSWORD"),
+		Mode:            LoadStrEnv("MODE"),
+		DBHost:          LoadStrEnv("POSTGRES_HOST"),
+		DBPort:          LoadIntEnv("POSTGRES_PORT"),
+		DBUser:          LoadStrEnv("POSTGRES_USER"),
+		DBName:          LoadStrEnv("POSTGRES_DB"),
+		DBPassword:      LoadStrEnv("POSTGRES_PASSWORD"),
+		ReCaptchaSecret: LoadStrEnv("RECAPTCHA_SECRET"),
 	}
 	if Env.Mode == "development" || Env.Mode == "staging" {
 		logger.Info("Running in development mode")
