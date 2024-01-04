@@ -53,6 +53,20 @@ func (lc *LinkCreate) SetNillableOwnerID(u *uuid.UUID) *LinkCreate {
 	return lc
 }
 
+// SetID sets the "id" field.
+func (lc *LinkCreate) SetID(u uuid.UUID) *LinkCreate {
+	lc.mutation.SetID(u)
+	return lc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (lc *LinkCreate) SetNillableID(u *uuid.UUID) *LinkCreate {
+	if u != nil {
+		lc.SetID(*u)
+	}
+	return lc
+}
+
 // SetOwner sets the "owner" edge to the User entity.
 func (lc *LinkCreate) SetOwner(u *User) *LinkCreate {
 	return lc.SetOwnerID(u.ID)
@@ -65,6 +79,7 @@ func (lc *LinkCreate) Mutation() *LinkMutation {
 
 // Save creates the Link in the database.
 func (lc *LinkCreate) Save(ctx context.Context) (*Link, error) {
+	lc.defaults()
 	return withHooks(ctx, lc.sqlSave, lc.mutation, lc.hooks)
 }
 
@@ -87,6 +102,14 @@ func (lc *LinkCreate) Exec(ctx context.Context) error {
 func (lc *LinkCreate) ExecX(ctx context.Context) {
 	if err := lc.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (lc *LinkCreate) defaults() {
+	if _, ok := lc.mutation.ID(); !ok {
+		v := link.DefaultID()
+		lc.mutation.SetID(v)
 	}
 }
 
@@ -115,8 +138,13 @@ func (lc *LinkCreate) sqlSave(ctx context.Context) (*Link, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(*uuid.UUID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
+	}
 	lc.mutation.id = &_node.ID
 	lc.mutation.done = true
 	return _node, nil
@@ -125,8 +153,12 @@ func (lc *LinkCreate) sqlSave(ctx context.Context) (*Link, error) {
 func (lc *LinkCreate) createSpec() (*Link, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Link{config: lc.config}
-		_spec = sqlgraph.NewCreateSpec(link.Table, sqlgraph.NewFieldSpec(link.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(link.Table, sqlgraph.NewFieldSpec(link.FieldID, field.TypeUUID))
 	)
+	if id, ok := lc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = &id
+	}
 	if value, ok := lc.mutation.Domain(); ok {
 		_spec.SetField(link.FieldDomain, field.TypeString, value)
 		_node.Domain = value
@@ -177,6 +209,7 @@ func (lcb *LinkCreateBulk) Save(ctx context.Context) ([]*Link, error) {
 	for i := range lcb.builders {
 		func(i int, root context.Context) {
 			builder := lcb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*LinkMutation)
 				if !ok {
@@ -203,10 +236,6 @@ func (lcb *LinkCreateBulk) Save(ctx context.Context) ([]*Link, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})

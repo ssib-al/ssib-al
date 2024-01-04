@@ -4,6 +4,7 @@ package ent
 
 import (
 	"github.com/google/uuid"
+	"ssib.al/ssib-al-back/ent/link"
 	"ssib.al/ssib-al-back/ent/schema"
 	"ssib.al/ssib-al-back/ent/user"
 )
@@ -12,6 +13,12 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	linkFields := schema.Link{}.Fields()
+	_ = linkFields
+	// linkDescID is the schema descriptor for id field.
+	linkDescID := linkFields[0].Descriptor()
+	// link.DefaultID holds the default value on creation for the id field.
+	link.DefaultID = linkDescID.Default.(func() uuid.UUID)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescID is the schema descriptor for id field.

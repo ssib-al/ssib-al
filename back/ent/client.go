@@ -269,7 +269,7 @@ func (c *LinkClient) UpdateOne(l *Link) *LinkUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *LinkClient) UpdateOneID(id int) *LinkUpdateOne {
+func (c *LinkClient) UpdateOneID(id uuid.UUID) *LinkUpdateOne {
 	mutation := newLinkMutation(c.config, OpUpdateOne, withLinkID(id))
 	return &LinkUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -286,7 +286,7 @@ func (c *LinkClient) DeleteOne(l *Link) *LinkDeleteOne {
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *LinkClient) DeleteOneID(id int) *LinkDeleteOne {
+func (c *LinkClient) DeleteOneID(id uuid.UUID) *LinkDeleteOne {
 	builder := c.Delete().Where(link.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -303,12 +303,12 @@ func (c *LinkClient) Query() *LinkQuery {
 }
 
 // Get returns a Link entity by its id.
-func (c *LinkClient) Get(ctx context.Context, id int) (*Link, error) {
+func (c *LinkClient) Get(ctx context.Context, id uuid.UUID) (*Link, error) {
 	return c.Query().Where(link.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *LinkClient) GetX(ctx context.Context, id int) *Link {
+func (c *LinkClient) GetX(ctx context.Context, id uuid.UUID) *Link {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)

@@ -10,7 +10,7 @@ import (
 var (
 	// LinksColumns holds the columns for the "links" table.
 	LinksColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "domain", Type: field.TypeString, SchemaType: map[string]string{"type": "varchar(32)"}},
 		{Name: "uri", Type: field.TypeString, SchemaType: map[string]string{"type": "varchar(256)"}},
 		{Name: "target_url", Type: field.TypeString, SchemaType: map[string]string{"type": "varchar(256)"}},
