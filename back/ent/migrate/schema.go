@@ -41,7 +41,7 @@ var (
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "username", Type: field.TypeString, Unique: true, SchemaType: map[string]string{"primary_key": "true", "type": "varchar(32)"}},
-		{Name: "email", Type: field.TypeString, Unique: true, SchemaType: map[string]string{"type": "varchar(256)"}},
+		{Name: "email", Type: field.TypeString, Unique: true, Nullable: true, SchemaType: map[string]string{"type": "varchar(256)"}},
 		{Name: "password_hash", Type: field.TypeString, SchemaType: map[string]string{"type": "varchar(512)"}},
 	}
 	// UsersTable holds the schema information for the "users" table.

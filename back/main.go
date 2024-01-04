@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gofiber/fiber/v2"
 	"ssib.al/ssib-al-back/config"
+	"ssib.al/ssib-al-back/routers"
 	"ssib.al/ssib-al-back/utils/logger"
 )
 
@@ -16,6 +17,8 @@ func main() {
 	app.Get("/api", func(c *fiber.Ctx) error {
 		return c.SendString("Hello, World 👋!")
 	})
+
+	routers.SetupRouter(app)
 
 	//server public folder
 	app.Static("/assets", "./public/assets")

@@ -3,6 +3,7 @@ package link
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -30,12 +31,13 @@ func LinkCtrl(c *fiber.Ctx) error {
 
 	uri := c.Params("uri", "")
 	if uri == "" {
-		return c.Redirect("/", 302)
+		return c.Redirect("/")
 	}
 
 	dbClient := config.GetDBClient()
 	link, err := dbClient.Link.Query().
 		Where(link.URIEQ(uri), link.DomainEQ(domain)).
+		WithOwner().
 		First(context.Background())
 	if err != nil {
 		return c.Redirect("/")
@@ -45,13 +47,14 @@ func LinkCtrl(c *fiber.Ctx) error {
 	if ua := c.Get("User-Agent", ""); ua != "" {
 		for _, bot := range knownSNSBot {
 			if strings.Contains(strings.ToLower(ua), bot) {
-				return c.Redirect(link.TargetURL, 302)
+				return c.Redirect(link.TargetURL)
 			}
 		}
 	}
+
 	if _, err = link.Edges.OwnerOrErr(); err != nil {
 		fmt.Println(err)
-		return c.Redirect(link.TargetURL, 302)
+		return c.Redirect(link.TargetURL)
 	}
-	return c.Redirect("/statisticlink/"+link.ID.String()+"/"+link.TargetURL, 302)
+	return c.Redirect("/statisticlink/" + link.ID.String() + "/" + url.PathEscape(link.TargetURL))
 }

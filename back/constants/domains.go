@@ -7,3 +7,9 @@ var (
 		"niae.me",
 	}
 )
+
+func InsertionPrefix(prefix string) {
+	for i, domain := range Domain {
+		Domain[i] = prefix + "." + domain
+	}
+}

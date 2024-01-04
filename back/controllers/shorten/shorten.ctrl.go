@@ -2,10 +2,15 @@ package shorten
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"slices"
 
 	"github.com/gofiber/fiber/v2"
 	"ssib.al/ssib-al-back/config"
+	"ssib.al/ssib-al-back/constants"
 	"ssib.al/ssib-al-back/ent/link"
+	"ssib.al/ssib-al-back/utils/crypt"
 	"ssib.al/ssib-al-back/utils/logger"
 	"ssib.al/ssib-al-back/utils/randstring"
 	"ssib.al/ssib-al-back/utils/validator"
@@ -21,11 +26,33 @@ type ShortenReq struct {
 func ShortenCtrl(c *fiber.Ctx) error {
 	body := new(ShortenReq)
 	if errArr := validator.ParseAndValidate(c, body); errArr != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(errArr)
+		errJson, _ := json.Marshal(errArr)
+		return c.Status(fiber.StatusBadRequest).JSON(config.RaiseError(
+			fiber.StatusBadRequest,
+			"Invalid request body",
+			string(errJson),
+		))
+	}
+	if !slices.Contains(constants.Domain, body.Domain) {
+		fmt.Println(constants.Domain)
+		return c.Status(fiber.StatusBadRequest).JSON(config.RaiseError(
+			fiber.StatusBadRequest,
+			"Invalid domain",
+			"존재하지 않는 도메인입니다.",
+		))
+	}
+	if body.Password != "" {
+		// password validation
+		if !validator.ValidatePassword(body.Password) {
+			return c.Status(fiber.StatusBadRequest).JSON(config.RaiseError(
+				fiber.StatusBadRequest,
+				"Invalid password",
+				"비밀번호 형식에 맞지 않습니다.",
+			))
+		}
 	}
 	client := config.GetDBClient()
 	uri := body.Uri
-	// add database logic here
 	if body.Uri == "" {
 		noDuplicate := false
 		for !noDuplicate {
@@ -43,19 +70,46 @@ func ShortenCtrl(c *fiber.Ctx) error {
 		}
 	}
 
-	newLinkEntity := client.Link.Create().
+	newLinkEntity, err := client.Link.Create().
 		SetDomain(body.Domain).
 		SetURI(uri).
-		SetTargetURL(body.Target)
+		SetTargetURL(body.Target).
+		Save(context.Background())
+	if err != nil {
+		logger.Error(err)
+		return c.Status(fiber.StatusInternalServerError).JSON(config.RaiseError(
+			fiber.StatusInternalServerError,
+			"Internal server error",
+			"서버 오류가 발생했습니다.",
+		))
+	}
 	if body.Password != "" {
-		logger.Debug("password is not empty")
-		// TODO: create user and set owner
-	}
-	if _, err := newLinkEntity.Save(context.Background()); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(err)
 
+		newUserEntity, err := client.User.Create().
+			SetUsername(body.Domain + "/" + uri).
+			SetPasswordHash(crypt.SHA512(body.Password)).
+			Save(context.Background())
+		if err != nil {
+			logger.Error(err)
+			return c.Status(fiber.StatusInternalServerError).JSON(config.RaiseError(
+				fiber.StatusInternalServerError,
+				"Internal server error",
+				"서버 오류가 발생했습니다.",
+			))
+		}
+		_, err = newLinkEntity.Update().
+			SetOwner(newUserEntity).
+			Save(context.Background())
+		if err != nil {
+			logger.Error(err)
+			return c.Status(fiber.StatusInternalServerError).JSON(config.RaiseError(
+				fiber.StatusInternalServerError,
+				"Internal server error",
+				"서버 오류가 발생했습니다.",
+			))
+		}
 	}
-	return c.Status(fiber.StatusOK).JSON(newLinkEntity)
+	return c.Status(fiber.StatusOK).JSON("https://" + body.Domain + "/l/" + uri)
 }
 
 func FindDuplicatedLink(domain string, uri string) bool {

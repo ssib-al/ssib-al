@@ -22,7 +22,7 @@ func (User) Fields() []ent.Field {
 		}).Unique(),
 		field.String("email").SchemaType(map[string]string{
 			"type": "varchar(256)",
-		}).Nillable().Unique(),
+		}).Optional().Unique(),
 		field.String("password_hash").SchemaType(map[string]string{
 			"type": "varchar(512)",
 		}),
