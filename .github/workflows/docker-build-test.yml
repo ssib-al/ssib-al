@@ -12,5 +12,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - name: Add .env file
+        run: echo "DOPPLER_TOKEN=$DOPPLER_TOKEN" > .env
+        env:
+          DOPPLER_TOKEN: ${{secrets.DOPPLER_TOKEN}}
       - name: Build the Docker image
         run: docker build . --file Dockerfile --tag ssib-al-test:${{github.sha}}
