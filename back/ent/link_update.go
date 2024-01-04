@@ -135,7 +135,7 @@ func (lu *LinkUpdate) ExecX(ctx context.Context) {
 }
 
 func (lu *LinkUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := sqlgraph.NewUpdateSpec(link.Table, link.Columns, sqlgraph.NewFieldSpec(link.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(link.Table, link.Columns, sqlgraph.NewFieldSpec(link.FieldID, field.TypeUUID))
 	if ps := lu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -320,7 +320,7 @@ func (luo *LinkUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (luo *LinkUpdateOne) sqlSave(ctx context.Context) (_node *Link, err error) {
-	_spec := sqlgraph.NewUpdateSpec(link.Table, link.Columns, sqlgraph.NewFieldSpec(link.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(link.Table, link.Columns, sqlgraph.NewFieldSpec(link.FieldID, field.TypeUUID))
 	id, ok := luo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Link.id" for update`)}

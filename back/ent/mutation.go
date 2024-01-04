@@ -34,7 +34,7 @@ type LinkMutation struct {
 	config
 	op            Op
 	typ           string
-	id            *int
+	id            *uuid.UUID
 	domain        *string
 	uri           *string
 	target_url    *string
@@ -66,7 +66,7 @@ func newLinkMutation(c config, op Op, opts ...linkOption) *LinkMutation {
 }
 
 // withLinkID sets the ID field of the mutation.
-func withLinkID(id int) linkOption {
+func withLinkID(id uuid.UUID) linkOption {
 	return func(m *LinkMutation) {
 		var (
 			err   error
@@ -116,9 +116,15 @@ func (m LinkMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Link entities.
+func (m *LinkMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *LinkMutation) ID() (id int, exists bool) {
+func (m *LinkMutation) ID() (id uuid.UUID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -129,12 +135,12 @@ func (m *LinkMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *LinkMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *LinkMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []uuid.UUID{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -603,8 +609,8 @@ type UserMutation struct {
 	email         *string
 	password_hash *string
 	clearedFields map[string]struct{}
-	links         map[int]struct{}
-	removedlinks  map[int]struct{}
+	links         map[uuid.UUID]struct{}
+	removedlinks  map[uuid.UUID]struct{}
 	clearedlinks  bool
 	done          bool
 	oldValue      func(context.Context) (*User, error)
@@ -768,7 +774,7 @@ func (m *UserMutation) Email() (r string, exists bool) {
 // OldEmail returns the old "email" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldEmail(ctx context.Context) (v *string, err error) {
+func (m *UserMutation) OldEmail(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldEmail is only allowed on UpdateOne operations")
 	}
@@ -782,9 +788,22 @@ func (m *UserMutation) OldEmail(ctx context.Context) (v *string, err error) {
 	return oldValue.Email, nil
 }
 
+// ClearEmail clears the value of the "email" field.
+func (m *UserMutation) ClearEmail() {
+	m.email = nil
+	m.clearedFields[user.FieldEmail] = struct{}{}
+}
+
+// EmailCleared returns if the "email" field was cleared in this mutation.
+func (m *UserMutation) EmailCleared() bool {
+	_, ok := m.clearedFields[user.FieldEmail]
+	return ok
+}
+
 // ResetEmail resets all changes to the "email" field.
 func (m *UserMutation) ResetEmail() {
 	m.email = nil
+	delete(m.clearedFields, user.FieldEmail)
 }
 
 // SetPasswordHash sets the "password_hash" field.
@@ -824,9 +843,9 @@ func (m *UserMutation) ResetPasswordHash() {
 }
 
 // AddLinkIDs adds the "links" edge to the Link entity by ids.
-func (m *UserMutation) AddLinkIDs(ids ...int) {
+func (m *UserMutation) AddLinkIDs(ids ...uuid.UUID) {
 	if m.links == nil {
-		m.links = make(map[int]struct{})
+		m.links = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		m.links[ids[i]] = struct{}{}
@@ -844,9 +863,9 @@ func (m *UserMutation) LinksCleared() bool {
 }
 
 // RemoveLinkIDs removes the "links" edge to the Link entity by IDs.
-func (m *UserMutation) RemoveLinkIDs(ids ...int) {
+func (m *UserMutation) RemoveLinkIDs(ids ...uuid.UUID) {
 	if m.removedlinks == nil {
-		m.removedlinks = make(map[int]struct{})
+		m.removedlinks = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		delete(m.links, ids[i])
@@ -855,7 +874,7 @@ func (m *UserMutation) RemoveLinkIDs(ids ...int) {
 }
 
 // RemovedLinks returns the removed IDs of the "links" edge to the Link entity.
-func (m *UserMutation) RemovedLinksIDs() (ids []int) {
+func (m *UserMutation) RemovedLinksIDs() (ids []uuid.UUID) {
 	for id := range m.removedlinks {
 		ids = append(ids, id)
 	}
@@ -863,7 +882,7 @@ func (m *UserMutation) RemovedLinksIDs() (ids []int) {
 }
 
 // LinksIDs returns the "links" edge IDs in the mutation.
-func (m *UserMutation) LinksIDs() (ids []int) {
+func (m *UserMutation) LinksIDs() (ids []uuid.UUID) {
 	for id := range m.links {
 		ids = append(ids, id)
 	}
@@ -1009,7 +1028,11 @@ func (m *UserMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *UserMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(user.FieldEmail) {
+		fields = append(fields, user.FieldEmail)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -1022,6 +1045,11 @@ func (m *UserMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *UserMutation) ClearField(name string) error {
+	switch name {
+	case user.FieldEmail:
+		m.ClearEmail()
+		return nil
+	}
 	return fmt.Errorf("unknown User nullable field %s", name)
 }
 

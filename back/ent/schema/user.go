@@ -15,14 +15,14 @@ type User struct {
 // Fields of the User.
 func (User) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("id", uuid.UUID{}).Unique().Default(uuid.New),
+		field.UUID("id", uuid.UUID{}).Default(uuid.New).Immutable().Unique(),
 		field.String("username").SchemaType(map[string]string{
 			"type":        "varchar(32)",
 			"primary_key": "true",
 		}).Unique(),
 		field.String("email").SchemaType(map[string]string{
 			"type": "varchar(256)",
-		}).Nillable().Unique(),
+		}).Optional().Unique(),
 		field.String("password_hash").SchemaType(map[string]string{
 			"type": "varchar(512)",
 		}),

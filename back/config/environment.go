@@ -5,14 +5,20 @@ import (
 	"os"
 	"strconv"
 
+	"ssib.al/ssib-al-back/constants"
 	"ssib.al/ssib-al-back/utils/logger"
 )
 
 var (
-	Env *EnvConfig
+	Env    *EnvConfig
+	DevEnv *DevEnvConfig
 )
 
+type DevEnvConfig struct {
+	DomainPrefix string
+}
 type EnvConfig struct {
+	Mode       string // MODE
 	DBHost     string // POSTGRES_HOST
 	DBPort     int    // POSTGRES_PORT
 	DBUser     string // POSTGRES_USER
@@ -39,10 +45,23 @@ func LoadIntEnv(key string) (value int) {
 
 func NewEnvConfig() {
 	Env = &EnvConfig{
+		Mode:       LoadStrEnv("MODE"),
 		DBHost:     LoadStrEnv("POSTGRES_HOST"),
 		DBPort:     LoadIntEnv("POSTGRES_PORT"),
 		DBUser:     LoadStrEnv("POSTGRES_USER"),
 		DBName:     LoadStrEnv("POSTGRES_DB"),
 		DBPassword: LoadStrEnv("POSTGRES_PASSWORD"),
+	}
+	if Env.Mode == "development" || Env.Mode == "staging" {
+		logger.Info("Running in development mode")
+		DevEnv = &DevEnvConfig{
+			DomainPrefix: LoadStrEnv("DOMAIN_PREFIX"),
+		}
+		constants.InsertionPrefix(DevEnv.DomainPrefix)
+
+	} else if Env.Mode == "production" {
+		logger.Info("Running in production mode")
+	} else {
+		logger.Panic(fmt.Errorf("invalid mode: %s", Env.Mode))
 	}
 }

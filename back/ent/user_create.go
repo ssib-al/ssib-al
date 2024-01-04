@@ -33,6 +33,14 @@ func (uc *UserCreate) SetEmail(s string) *UserCreate {
 	return uc
 }
 
+// SetNillableEmail sets the "email" field if the given value is not nil.
+func (uc *UserCreate) SetNillableEmail(s *string) *UserCreate {
+	if s != nil {
+		uc.SetEmail(*s)
+	}
+	return uc
+}
+
 // SetPasswordHash sets the "password_hash" field.
 func (uc *UserCreate) SetPasswordHash(s string) *UserCreate {
 	uc.mutation.SetPasswordHash(s)
@@ -54,14 +62,14 @@ func (uc *UserCreate) SetNillableID(u *uuid.UUID) *UserCreate {
 }
 
 // AddLinkIDs adds the "links" edge to the Link entity by IDs.
-func (uc *UserCreate) AddLinkIDs(ids ...int) *UserCreate {
+func (uc *UserCreate) AddLinkIDs(ids ...uuid.UUID) *UserCreate {
 	uc.mutation.AddLinkIDs(ids...)
 	return uc
 }
 
 // AddLinks adds the "links" edges to the Link entity.
 func (uc *UserCreate) AddLinks(l ...*Link) *UserCreate {
-	ids := make([]int, len(l))
+	ids := make([]uuid.UUID, len(l))
 	for i := range l {
 		ids[i] = l[i].ID
 	}
@@ -114,9 +122,6 @@ func (uc *UserCreate) check() error {
 	if _, ok := uc.mutation.Username(); !ok {
 		return &ValidationError{Name: "username", err: errors.New(`ent: missing required field "User.username"`)}
 	}
-	if _, ok := uc.mutation.Email(); !ok {
-		return &ValidationError{Name: "email", err: errors.New(`ent: missing required field "User.email"`)}
-	}
 	if _, ok := uc.mutation.PasswordHash(); !ok {
 		return &ValidationError{Name: "password_hash", err: errors.New(`ent: missing required field "User.password_hash"`)}
 	}
@@ -161,7 +166,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := uc.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
-		_node.Email = &value
+		_node.Email = value
 	}
 	if value, ok := uc.mutation.PasswordHash(); ok {
 		_spec.SetField(user.FieldPasswordHash, field.TypeString, value)
@@ -175,7 +180,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Columns: []string{user.LinksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(link.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(link.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"ssib.al/ssib-al-back/ent/link"
 	"ssib.al/ssib-al-back/ent/predicate"
 	"ssib.al/ssib-al-back/ent/user"
@@ -56,6 +57,12 @@ func (uu *UserUpdate) SetNillableEmail(s *string) *UserUpdate {
 	return uu
 }
 
+// ClearEmail clears the value of the "email" field.
+func (uu *UserUpdate) ClearEmail() *UserUpdate {
+	uu.mutation.ClearEmail()
+	return uu
+}
+
 // SetPasswordHash sets the "password_hash" field.
 func (uu *UserUpdate) SetPasswordHash(s string) *UserUpdate {
 	uu.mutation.SetPasswordHash(s)
@@ -71,14 +78,14 @@ func (uu *UserUpdate) SetNillablePasswordHash(s *string) *UserUpdate {
 }
 
 // AddLinkIDs adds the "links" edge to the Link entity by IDs.
-func (uu *UserUpdate) AddLinkIDs(ids ...int) *UserUpdate {
+func (uu *UserUpdate) AddLinkIDs(ids ...uuid.UUID) *UserUpdate {
 	uu.mutation.AddLinkIDs(ids...)
 	return uu
 }
 
 // AddLinks adds the "links" edges to the Link entity.
 func (uu *UserUpdate) AddLinks(l ...*Link) *UserUpdate {
-	ids := make([]int, len(l))
+	ids := make([]uuid.UUID, len(l))
 	for i := range l {
 		ids[i] = l[i].ID
 	}
@@ -97,14 +104,14 @@ func (uu *UserUpdate) ClearLinks() *UserUpdate {
 }
 
 // RemoveLinkIDs removes the "links" edge to Link entities by IDs.
-func (uu *UserUpdate) RemoveLinkIDs(ids ...int) *UserUpdate {
+func (uu *UserUpdate) RemoveLinkIDs(ids ...uuid.UUID) *UserUpdate {
 	uu.mutation.RemoveLinkIDs(ids...)
 	return uu
 }
 
 // RemoveLinks removes "links" edges to Link entities.
 func (uu *UserUpdate) RemoveLinks(l ...*Link) *UserUpdate {
-	ids := make([]int, len(l))
+	ids := make([]uuid.UUID, len(l))
 	for i := range l {
 		ids[i] = l[i].ID
 	}
@@ -153,6 +160,9 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
+	if uu.mutation.EmailCleared() {
+		_spec.ClearField(user.FieldEmail, field.TypeString)
+	}
 	if value, ok := uu.mutation.PasswordHash(); ok {
 		_spec.SetField(user.FieldPasswordHash, field.TypeString, value)
 	}
@@ -164,7 +174,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{user.LinksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(link.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(link.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -177,7 +187,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{user.LinksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(link.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(link.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -193,7 +203,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{user.LinksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(link.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(link.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -249,6 +259,12 @@ func (uuo *UserUpdateOne) SetNillableEmail(s *string) *UserUpdateOne {
 	return uuo
 }
 
+// ClearEmail clears the value of the "email" field.
+func (uuo *UserUpdateOne) ClearEmail() *UserUpdateOne {
+	uuo.mutation.ClearEmail()
+	return uuo
+}
+
 // SetPasswordHash sets the "password_hash" field.
 func (uuo *UserUpdateOne) SetPasswordHash(s string) *UserUpdateOne {
 	uuo.mutation.SetPasswordHash(s)
@@ -264,14 +280,14 @@ func (uuo *UserUpdateOne) SetNillablePasswordHash(s *string) *UserUpdateOne {
 }
 
 // AddLinkIDs adds the "links" edge to the Link entity by IDs.
-func (uuo *UserUpdateOne) AddLinkIDs(ids ...int) *UserUpdateOne {
+func (uuo *UserUpdateOne) AddLinkIDs(ids ...uuid.UUID) *UserUpdateOne {
 	uuo.mutation.AddLinkIDs(ids...)
 	return uuo
 }
 
 // AddLinks adds the "links" edges to the Link entity.
 func (uuo *UserUpdateOne) AddLinks(l ...*Link) *UserUpdateOne {
-	ids := make([]int, len(l))
+	ids := make([]uuid.UUID, len(l))
 	for i := range l {
 		ids[i] = l[i].ID
 	}
@@ -290,14 +306,14 @@ func (uuo *UserUpdateOne) ClearLinks() *UserUpdateOne {
 }
 
 // RemoveLinkIDs removes the "links" edge to Link entities by IDs.
-func (uuo *UserUpdateOne) RemoveLinkIDs(ids ...int) *UserUpdateOne {
+func (uuo *UserUpdateOne) RemoveLinkIDs(ids ...uuid.UUID) *UserUpdateOne {
 	uuo.mutation.RemoveLinkIDs(ids...)
 	return uuo
 }
 
 // RemoveLinks removes "links" edges to Link entities.
 func (uuo *UserUpdateOne) RemoveLinks(l ...*Link) *UserUpdateOne {
-	ids := make([]int, len(l))
+	ids := make([]uuid.UUID, len(l))
 	for i := range l {
 		ids[i] = l[i].ID
 	}
@@ -376,6 +392,9 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if value, ok := uuo.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
+	if uuo.mutation.EmailCleared() {
+		_spec.ClearField(user.FieldEmail, field.TypeString)
+	}
 	if value, ok := uuo.mutation.PasswordHash(); ok {
 		_spec.SetField(user.FieldPasswordHash, field.TypeString, value)
 	}
@@ -387,7 +406,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Columns: []string{user.LinksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(link.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(link.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -400,7 +419,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Columns: []string{user.LinksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(link.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(link.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -416,7 +435,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Columns: []string{user.LinksColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(link.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(link.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

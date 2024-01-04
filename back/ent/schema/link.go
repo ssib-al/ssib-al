@@ -16,6 +16,7 @@ type Link struct {
 // Fields of the Link.
 func (Link) Fields() []ent.Field {
 	return []ent.Field{
+		field.UUID("id", uuid.UUID{}).Default(uuid.New).Immutable().Unique(),
 		field.String("domain").SchemaType(map[string]string{
 			"type": "varchar(32)",
 		}),

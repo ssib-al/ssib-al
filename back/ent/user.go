@@ -20,7 +20,7 @@ type User struct {
 	// Username holds the value of the "username" field.
 	Username string `json:"username,omitempty"`
 	// Email holds the value of the "email" field.
-	Email *string `json:"email,omitempty"`
+	Email string `json:"email,omitempty"`
 	// PasswordHash holds the value of the "password_hash" field.
 	PasswordHash string `json:"password_hash,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -87,8 +87,7 @@ func (u *User) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field email", values[i])
 			} else if value.Valid {
-				u.Email = new(string)
-				*u.Email = value.String
+				u.Email = value.String
 			}
 		case user.FieldPasswordHash:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -140,10 +139,8 @@ func (u *User) String() string {
 	builder.WriteString("username=")
 	builder.WriteString(u.Username)
 	builder.WriteString(", ")
-	if v := u.Email; v != nil {
-		builder.WriteString("email=")
-		builder.WriteString(*v)
-	}
+	builder.WriteString("email=")
+	builder.WriteString(u.Email)
 	builder.WriteString(", ")
 	builder.WriteString("password_hash=")
 	builder.WriteString(u.PasswordHash)
