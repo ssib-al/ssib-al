@@ -8,9 +8,19 @@ RUN go build -o main .
 
 FROM node:20-alpine AS frontend-builder
 
+ARG MODE=production
+ARG DOMAIN_PREFIX
+
 WORKDIR /build/front
-COPY ./front/ ./
+
+RUN echo "VITE_DOMAIN_PREFIX=${DOMAIN_PREFIX}" > .env
+RUN echo "VITE_MODE=${MODE}" >> .env
+
+COPY ./front/package.json ./front/package-lock.json ./
 RUN npm install
+
+COPY ./front/ ./
+
 RUN npm run build
 
 FROM alpine:3.18

@@ -4,6 +4,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - MODE=development
+        - DOMAIN_PREFIX=dev-local
     ports:
       - 3000:3000
     env_file:

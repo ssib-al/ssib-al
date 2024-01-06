@@ -3,7 +3,6 @@ package shorten
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"slices"
 
 	"github.com/gofiber/fiber/v2"
@@ -36,7 +35,6 @@ func ShortenCtrl(c *fiber.Ctx) error {
 		))
 	}
 	if !slices.Contains(constants.Domain, body.Domain) {
-		fmt.Println(constants.Domain)
 		return c.Status(fiber.StatusBadRequest).JSON(config.RaiseError(
 			fiber.StatusBadRequest,
 			"Invalid domain",

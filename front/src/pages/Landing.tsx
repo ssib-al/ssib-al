@@ -10,6 +10,7 @@ import {
 import { RECAPTCHA_SITE_KEY } from '../constants/recaptcha';
 import ReCAPTCHA from 'react-google-recaptcha';
 import ShortenLinkAPI from '../api/shortenLink';
+import { domain } from '../constants/domain';
 
 const urlRegex: RegExp = new RegExp(
   '^[-a-zA-Z0-9@:%._+~#=]{2,256}.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_+.~#?&//=]*)$',
@@ -103,9 +104,9 @@ const LandingPage = () => {
                       name="domain"
                       className="h-full rounded-md border-0 bg-transparent py-0 pl-3 pr-5 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
                     >
-                      <option>dev-local.ssib.al</option>
-                      <option>dev-local.zirr.al</option>
-                      <option>dev-local.niae.me</option>
+                      {domain.map((v) => {
+                        return <option value={v}>{v}</option>;
+                      })}
                     </select>
                   </div>
                   <input
@@ -213,8 +214,6 @@ const LandingPage = () => {
                           if (!linkStrInputRef.current) return;
                           if (!linkDestinationInputRef.current) return;
                           setLinkModalOpen(false);
-                          console.log(linkSSLInputRef.current?.value);
-                          console.log(linkDestinationInputRef.current?.value);
                           await ShortenLinkAPI(
                             {
                               domain: linkDomainInputRef.current?.value,
