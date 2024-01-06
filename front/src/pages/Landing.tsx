@@ -4,12 +4,12 @@ import Navbar from '../components/Navbar';
 import Notification from '../components/Notification';
 import { Fragment, useRef, useState } from 'react';
 import {
-  CheckCircleIcon,
   ExclamationCircleIcon,
   QuestionMarkCircleIcon,
 } from '@heroicons/react/24/outline';
 import { RECAPTCHA_SITE_KEY } from '../constants/recaptcha';
 import ReCAPTCHA from 'react-google-recaptcha';
+import ShortenLinkAPI from '../api/shortenLink';
 
 const urlRegex: RegExp = new RegExp(
   '^[-a-zA-Z0-9@:%._+~#=]{2,256}.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_+.~#?&//=]*)$',
@@ -19,8 +19,6 @@ const LandingPage = () => {
   const [captchaShow, setCaptchaShow] = useState(false);
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [linkInvalidNotificationOpen, setLinkInvalidNotificationOpen] =
-    useState(false);
-  const [linkGeneratedNotificationOpen, setLinkGeneratedNotificationOpen] =
     useState(false);
 
   const cancelButtonRef = useRef(null);
@@ -79,6 +77,7 @@ const LandingPage = () => {
                       id="ssl"
                       name="ssl"
                       className="h-full rounded-md border-0 bg-transparent py-0 pl-3 pr-7 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
+                      defaultValue="https://"
                     >
                       <option>http://</option>
                       <option>https://</option>
@@ -104,9 +103,9 @@ const LandingPage = () => {
                       name="domain"
                       className="h-full rounded-md border-0 bg-transparent py-0 pl-3 pr-5 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
                     >
-                      <option>ssib.al/</option>
-                      <option>zirr.al/</option>
-                      <option>niae.me/</option>
+                      <option>dev-local.ssib.al</option>
+                      <option>dev-local.zirr.al</option>
+                      <option>dev-local.niae.me</option>
                     </select>
                   </div>
                   <input
@@ -205,19 +204,39 @@ const LandingPage = () => {
                       <ReCAPTCHA
                         className="mx-auto"
                         sitekey={RECAPTCHA_SITE_KEY}
-                        onChange={(value: string | null) => {
+                        onChange={async (value: string | null) => {
                           if (value === null) {
                             console.error('captcha error');
                             return;
                           }
+                          if (!linkDomainInputRef.current) return;
+                          if (!linkStrInputRef.current) return;
+                          if (!linkDestinationInputRef.current) return;
                           setLinkModalOpen(false);
-                          // TODO: generate link
-                          setLinkGeneratedNotificationOpen(true);
+                          console.log(linkSSLInputRef.current?.value);
+                          console.log(linkDestinationInputRef.current?.value);
+                          await ShortenLinkAPI(
+                            {
+                              domain: linkDomainInputRef.current?.value,
+                              uri: linkStrInputRef.current?.value,
+                              target:
+                                linkSSLInputRef.current?.value +
+                                linkDestinationInputRef.current?.value,
+                              token: value,
+                            },
+                            (res) => {
+                              window.location.href =
+                                '/generated/' + encodeURIComponent(res.data);
+                            },
+                            (err) => {
+                              console.error(err);
+                            },
+                          );
                         }}
                       />
                       <button
                         className="text-sm text-gray-500"
-                        onClick={() => setCaptchaShow(true)}
+                        onClick={() => setCaptchaShow(false)}
                       >
                         이전으로 <span aria-hidden="true">&rarr;</span>
                       </button>
@@ -259,18 +278,6 @@ const LandingPage = () => {
         }
         title="링크가 유효하지 않습니다"
         description="링크를 다시 확인해주세요."
-      />
-      <Notification
-        open={linkGeneratedNotificationOpen}
-        setOpen={setLinkGeneratedNotificationOpen}
-        icon={
-          <CheckCircleIcon
-            className="h-6 w-6 text-green-600"
-            aria-hidden="true"
-          />
-        }
-        title="링크가 생성되었습니다"
-        description="링크를 복사하고 공유하세요!"
       />
     </div>
   );

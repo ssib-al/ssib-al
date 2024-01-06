@@ -2,7 +2,6 @@ package link
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"strings"
 
@@ -37,7 +36,6 @@ func LinkCtrl(c *fiber.Ctx) error {
 	dbClient := config.GetDBClient()
 	link, err := dbClient.Link.Query().
 		Where(link.URIEQ(uri), link.DomainEQ(domain)).
-		WithOwner().
 		First(context.Background())
 	if err != nil {
 		return c.Redirect("/")
@@ -52,8 +50,7 @@ func LinkCtrl(c *fiber.Ctx) error {
 		}
 	}
 
-	if _, err = link.Edges.OwnerOrErr(); err != nil {
-		fmt.Println(err)
+	if _, err = link.QueryOwner().First(context.Background()); err != nil {
 		return c.Redirect(link.TargetURL)
 	}
 	return c.Redirect("/statisticlink/" + link.ID.String() + "/" + url.PathEscape(link.TargetURL))
