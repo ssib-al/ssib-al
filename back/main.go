@@ -21,6 +21,7 @@ func main() {
 	routers.SetupRouter(app)
 
 	//server public folder
+	app.Static("/robots.txt", "./public/robots.txt")
 	app.Static("/assets", "./public/assets")
 	app.Static("/font", "./public/font")
 	app.Static("/ssibal-logo.svg", "./public/ssibal-logo.svg")

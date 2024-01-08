@@ -1,0 +1,11 @@
+User-agent: Yeti
+Disallow: /
+Allow: /$
+Allow: /assets/
+Allow: /ssibal-logo.svg
+
+User-agent: Googlebot
+Disallow: /
+Allow: /$
+Allow: /assets/
+Allow: /ssibal-logo.svg
