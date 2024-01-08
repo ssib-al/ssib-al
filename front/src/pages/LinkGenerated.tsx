@@ -11,6 +11,7 @@ import {
 } from '@heroicons/react/24/outline';
 import Notification from '../components/Notification';
 import { useState } from 'react';
+import ShareModal from '../components/ShareModal';
 
 const features = [
   {
@@ -40,6 +41,7 @@ const features = [
 ];
 
 const LinkGeneratedPage = () => {
+  const [linkShareModalOpen, setLinkShareModalOpen] = useState(false);
   const [linkCopiedNotificationOpen, setLinkCopiedNotificationOpen] =
     useState(false);
   const { link } = useParams();
@@ -76,6 +78,17 @@ const LinkGeneratedPage = () => {
               <button
                 type="button"
                 className="rounded-md bg-indigo-600 px-5 py-3 text-base font-medium text-white hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:px-8"
+                onClick={async () => {
+                  if (/Mobi|Android/i.test(navigator.userAgent)) {
+                    await navigator.share({
+                      title: '씨발 - 링크단축 공유',
+                      text: '공유된 링크를 확인하세요!',
+                      url: link,
+                    });
+                  } else {
+                    setLinkShareModalOpen(true);
+                  }
+                }}
               >
                 링크 공유하기
               </button>
@@ -126,6 +139,14 @@ const LinkGeneratedPage = () => {
           </div>
         </div>
       </section>
+      <ShareModal
+        title="링크 공유하기"
+        description={link}
+        open={linkShareModalOpen}
+        setOpen={setLinkShareModalOpen}
+        link={link}
+      />
+      ;
       <Notification
         open={linkCopiedNotificationOpen}
         setOpen={setLinkCopiedNotificationOpen}

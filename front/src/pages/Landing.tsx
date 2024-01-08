@@ -6,11 +6,13 @@ import { Fragment, useRef, useState } from 'react';
 import {
   ExclamationCircleIcon,
   QuestionMarkCircleIcon,
+  ShareIcon,
 } from '@heroicons/react/24/outline';
 import { RECAPTCHA_SITE_KEY } from '../constants/recaptcha';
 import ReCAPTCHA from 'react-google-recaptcha';
 import ShortenLinkAPI from '../api/shortenLink';
 import { domain } from '../constants/domain';
+import ShareModal from '../components/ShareModal';
 
 const urlRegex: RegExp = new RegExp(
   '^[-a-zA-Z0-9@:%._+~#=]{2,256}.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_+.~#?&//=]*)$',
@@ -19,6 +21,7 @@ const urlRegex: RegExp = new RegExp(
 const LandingPage = () => {
   const [captchaShow, setCaptchaShow] = useState(false);
   const [linkModalOpen, setLinkModalOpen] = useState(false);
+  const [linkShareModalOpen, setLinkShareModalOpen] = useState(false);
   const [linkInvalidNotificationOpen, setLinkInvalidNotificationOpen] =
     useState(false);
   const [loadingShow, setLoadingShow] = useState(false);
@@ -147,6 +150,19 @@ const LandingPage = () => {
         </div>
         <div className="absolute inset-x-0 bottom-0 -z-10 h-24 bg-gradient-to-t from-white sm:h-32" />
       </div>
+      <button
+        className="fixed bottom-4 right-4 z-50 rounded-full bg-indigo-600 p-3 text-white shadow-lg hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+        onClick={() => setLinkShareModalOpen(true)}
+      >
+        <ShareIcon className="h-6 w-6" aria-hidden="true" />
+      </button>
+      <ShareModal
+        title="공유하기"
+        description="다른 사람들에게 씨발을 전파하세요!!"
+        link="https://ssib.al"
+        setOpen={setLinkShareModalOpen}
+        open={linkShareModalOpen}
+      />
       <Transition.Root show={linkModalOpen} as={Fragment}>
         <Dialog
           as="div"
