@@ -21,6 +21,7 @@ const LandingPage = () => {
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [linkInvalidNotificationOpen, setLinkInvalidNotificationOpen] =
     useState(false);
+  const [loadingShow, setLoadingShow] = useState(false);
 
   const cancelButtonRef = useRef(null);
   const linkDestinationInputRef = useRef<HTMLInputElement>(null);
@@ -200,7 +201,7 @@ const LandingPage = () => {
                     </div>
                   </div>
 
-                  {captchaShow ? (
+                  {!loadingShow && captchaShow ? (
                     <div className="mt-5 place-content-center sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-1 sm:gap-3">
                       <ReCAPTCHA
                         className="mx-auto"
@@ -213,7 +214,8 @@ const LandingPage = () => {
                           if (!linkDomainInputRef.current) return;
                           if (!linkStrInputRef.current) return;
                           if (!linkDestinationInputRef.current) return;
-                          setLinkModalOpen(false);
+                          setLoadingShow(true);
+                          setCaptchaShow(false);
                           await ShortenLinkAPI(
                             {
                               domain: linkDomainInputRef.current?.value,
@@ -228,6 +230,7 @@ const LandingPage = () => {
                                 '/generated/' + encodeURIComponent(res.data);
                             },
                             (err) => {
+                              setLinkModalOpen(false);
                               console.error(err);
                             },
                           );
@@ -241,7 +244,35 @@ const LandingPage = () => {
                       </button>
                     </div>
                   ) : null}
-                  {!captchaShow ? (
+                  {loadingShow && !captchaShow ? (
+                    <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-1 sm:gap-3">
+                      <div className="flex items-center justify-center">
+                        <svg
+                          className="-ml-1 mr-3 h-5 w-5 animate-spin text-gray-900"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                          />
+                        </svg>
+                        <p className="text-sm text-gray-500">
+                          링크를 생성하는 중입니다.
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
+                  {!captchaShow && !loadingShow ? (
                     <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
                       <button
                         type="button"
